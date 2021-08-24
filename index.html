@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<title>Map</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css' rel='stylesheet' />
+<style>
+body { margin:0; padding:0; }
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+#menu {
+    position: absolute;
+    left:  0.5em;
+    top: 0.5em; 
+    padding: 0.2em 0.5em;
+    margin: 0 0;
+    background: #eeeeee;
+    box-shadow: 0px 0px 0px 5px #eeeeee;
+    border: dashed 3px #dddddd;
+    font-family: 'Open Sans', sans-serif;
+    width: 90%;
+    height: auto;
+    max-width: 300px;
+}
+button.local {
+  display: block;
+  text-align:center;
+  background: #dddddd;
+  padding 0 0.5em 0 0.5em;
+  border: solid 2px #ddd;
+  border-radius: 3px;
+  margin: 2.5px 0px 2.5px 0px;
+  line-height: 1.5em;
+  font-size: 1em;
+  width: 100%;
+}
+
+</style>
+</head>
+<body>
+
+
+<div id='map'></div>
+<div id='menu'>
+  <button type="button" class="local" name="monochrome" onclick="addRasterLayer('seamlessphoto')" >空中写真</button>
+</div>
+
+
+<script>
+/*************************************************/
+/*Mapbox 関係設定                                */
+/*************************************************/
+mapboxgl.accessToken = 'pk.eyJ1IjoibWdocyIsImEiOiJja3M5cmR0cjQwNzZuMnVuM29pMnF4amNhIn0.mhPsRL4mRS7jjr3Fy2StKQ';
+var map = new mapboxgl.Map({
+  container: 'map', // container id
+  hash: true, //add #position on URL
+  style: './style.json', // stylesheet location
+  center: [139.78148, 35.768793], // starting position [lng, lat]
+  zoom: 9, // starting zoom
+  minZoom: 4,
+  maxZoom: 17.99,
+  localIdeographFontFamily: ['MS Gothic', 'Hiragino Kaku Gothic Pro', 'sans-serif']
+});
+
+
+map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+map.addControl(new mapboxgl.ScaleControl() );
+
+/*************************************************/
+/*Add 3D terrain to a map                        */
+/*************************************************/
+
+map.on('load', () => {
+  map.addSource('mapbox-dem', {
+    'type': 'raster-dem',
+    'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+    'tileSize': 512,
+    'maxzoom': 14
+  });
+  // add the DEM source as a terrain layer with exaggerated height
+  map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+   
+  // add a sky layer that will show when the map is highly pitched
+  map.addLayer({
+    'id': 'sky',
+    'type': 'sky',
+    'paint': {
+      'sky-type': 'atmosphere',
+      'sky-atmosphere-sun': [0.0, 0.0],
+      'sky-atmosphere-sun-intensity': 15
+    }
+  });
+});
+
+
+/*************************************************/
+/*地図の切り替え                                 */
+/*************************************************/
+var addRasterLayer = function(tileid){
+  var layerid = "layer-" + tileid;
+  var sourceid = "source-" + tileid;
+  var ext = "jpg";
+  
+  if(map.getLayer(layerid)){
+    map.removeLayer(layerid);
+    if(map.getSource(sourceid)){
+      map.removeSource(sourceid);
+    }
+    return;
+  }
+  map.addSource(sourceid, {
+    type: 'raster',
+    tiles: ['https://cyberjapandata.gsi.go.jp/xyz/' + tileid + '/{z}/{x}/{y}.' + ext ],
+    minzoom: 2,
+    maxzoom: 18
+  });
+  
+  
+  map.addLayer({
+    id: layerid,
+    type: 'raster',
+    source: sourceid,
+    layout: {},
+    paint: {}
+  }, 'background-insert1');
+}
+
+
+//ポップアップ表示
+var popup = new mapboxgl.Popup();
+map.on('click', function(e) {
+  
+  
+  //レンダリングされた地物を取得
+  var features = map.queryRenderedFeatures(e.point);
+  if (!features.length) {
+    popup.remove();
+    return;
+  }
+  
+  var htmlString = ""; //ポップアップ
+  
+  for(i in features){
+  
+      //ポップアップ表示 --------------------
+      var feature = features[i];
+      console.log(feature);
+    
+      var featureProperties = "<table>";
+      for(name in feature.properties){
+          featureProperties = featureProperties + "<tr><td style='vertical-align:top; color:#0000ff;'>" + name + "</td>";
+          featureProperties = featureProperties + "<td style='color:#000000;'>" + feature.properties[name] + "</td></tr>";
+      }
+      featureProperties = featureProperties +  "</table>";
+      
+      htmlString = htmlString + "<span style='font-weight:bold;' >" + feature.layer.id + ":" + feature.sourceLayer + "</span>" + featureProperties;
+      //htmlString = htmlString + "<br>データソース：" + feature.sourceLayer + "<br>--属性値：" + JSON.stringify( feature.properties );
+      //レイヤID => feature.layer.id
+    
+    
+  }
+  
+  //結果の表示
+  //ポップアップ
+  popup.setLngLat([ e.lngLat.lng, e.lngLat.lat ])
+    .setHTML(htmlString)
+    .addTo(map);
+  
+});
+
+</script>
+ 
+</body>
+</html>
