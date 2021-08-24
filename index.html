@@ -85,7 +85,24 @@ map.on('load', () => {
   });
   // add the DEM source as a terrain layer with exaggerated height
   map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-   
+  
+  map.addLayer({
+     "id": "hillshade",
+     "source": "mapbox-dem",
+     "type": "hillshade",
+     "minzoom":4,
+     "maxzoom":17,
+     "layout": {
+          "visibility": "visible"
+     },
+     "paint": {
+         "hillshade-exaggeration" : 0.3,
+         "hillshade-shadow-color": "#088a08",
+         "hillshade-highlight-color": "#80ff00",
+         "hillshade-accent-color" : "#000000"
+     }
+  }, "background");
+  
   // add a sky layer that will show when the map is highly pitched
   map.addLayer({
     'id': 'sky',
