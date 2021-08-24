@@ -62,9 +62,9 @@
                     "interpolate",
                     ["linear"],
                     ["zoom"],
-                    5,
+                    10,
                     0,
-                    6,
+                    13,
                     1
                 ]
             }
@@ -322,7 +322,7 @@
   "filter":["any",
     ["<","ftCode",2800],[">","ftCode",2899]
   ],
-  "paint":{"line-color":"rgba(240,240,230,1)","line-width":4},
+  "paint":{"line-color":"rgba(240,240,230,1)","line-width":4,"line-opacity":0.5},
   "layout":{"line-cap":"butt","visibility":"visible"},
   "id":"railway-all-edge"
 },
